@@ -21,7 +21,7 @@ model User {
    password             String
 
    displayName          String      @default("Не указано")
-   picture              String      @default("https://ecweoronuybtpycs.private.blob.vercel-storage.com/no-user-image.png")
+   picture              String      @default("https://llbx8df7abbnujxh.public.blob.vercel-storage.com/icons/no-user-image.png")
 
    role                 UserRole    @default(REGULAR)
    method               AuthMethod
