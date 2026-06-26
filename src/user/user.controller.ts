@@ -19,10 +19,13 @@ export class UserController {
    constructor(private readonly userService: UserService) {}
 
    //Получение профиля============================================
-   @Authorization()
+   @Authorization({ isOptional: true })
    @HttpCode(HttpStatus.OK)
    @Get('profile')
-   public async getProfile(@Authorized('id') userId: string) {
+   public async getProfile(@Authorized('id') userId: string | null) {
+      if (!userId) {
+         return null;
+      }
       return await this.userService.getById(userId);
    }
 

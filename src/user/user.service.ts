@@ -22,6 +22,16 @@ export class UserService {
                },
             },
             orders: true,
+            cartItems: {
+               include: {
+                  variant: {
+                     include: {
+                        product: true,
+                        color: true,
+                     },
+                  },
+               },
+            },
          },
       });
 
@@ -44,6 +54,16 @@ export class UserService {
             accounts: true,
             favorites: true,
             orders: true,
+            cartItems: {
+               include: {
+                  variant: {
+                     include: {
+                        product: true,
+                        color: true,
+                     },
+                  },
+               },
+            },
          },
       });
 
@@ -76,6 +96,16 @@ export class UserService {
                },
             },
             orders: true,
+            cartItems: {
+               include: {
+                  variant: {
+                     include: {
+                        product: true,
+                        color: true,
+                     },
+                  },
+               },
+            },
          },
       });
 
@@ -100,20 +130,26 @@ export class UserService {
 
    //Добавление в избранное===================================
    async toggleFavorite(productId: string, userId: string) {
-      const user = await this.getById(userId);
+      // 1. Проверяем напрямую, связана ли эта пара userId и productId
+      const favoriteExists = await this.prismaService.product.findFirst({
+         where: {
+            id: productId,
+            favoritedBy: {
+               some: {
+                  id: userId,
+               },
+            },
+         },
+      });
 
-      //Проверка существования данного товара в избранных
-      const isExists = user?.favorites.some(
-         (product) => product.id === productId,
-      );
-
+      // 2. Делаем connect или disconnect одной операцией без загрузки всего профиля
       await this.prismaService.user.update({
          where: {
-            id: user?.id,
+            id: userId,
          },
          data: {
             favorites: {
-               [isExists ? 'disconnect' : 'connect']: {
+               [favoriteExists ? 'disconnect' : 'connect']: {
                   id: productId,
                },
             },

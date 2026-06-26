@@ -7,8 +7,10 @@ import { User } from '../../generated/prisma/client';
 export const CurrentUser = createParamDecorator(
    (data: keyof User, context: ExecutionContext) => {
       const request = context.switchToHttp().getRequest();
-      const user = request.user;
+      if (data) {
+         return request.user?.[data] || null;
+      }
 
-      return data ? user[data] : user;
+      return request.user || null;
    },
 );

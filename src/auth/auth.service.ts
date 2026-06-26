@@ -31,11 +31,11 @@ export class AuthService {
    ) {}
 
    //Регистрация=======================================================
-   async register(req: Request, dto: RegisterDto) {
+   async register(dto: RegisterDto) {
       const isExistUser = await this.userService.getByEmail(dto.email);
 
       if (isExistUser) {
-         throw new ConflictException(
+         return new ConflictException(
             'Регистрация не удалась! Пользователь с таким email уже существует!',
          );
       }
@@ -62,20 +62,20 @@ export class AuthService {
       const user = await this.userService.getByEmail(dto.email);
 
       if (!user || !user.password) {
-         throw new NotFoundException('Пользователь не найден!');
+         return new NotFoundException('Пользователь не найден!');
       }
 
       const isValidPassword = await verify(user.password, dto.password);
 
       if (!isValidPassword) {
-         throw new UnauthorizedException(
+         return new UnauthorizedException(
             'Неверный пароль! Попробуйте еще или восстановите пароль!',
          );
       }
 
       if (!user.isVerified) {
          await this.emailConfirmationService.sendVerificationToken(user.email);
-         throw new UnauthorizedException(
+         return new UnauthorizedException(
             'Ваш email не подтвержден! Пожалуйста, проверьте вашу почту и подтвердите email',
          );
       }
@@ -105,7 +105,7 @@ export class AuthService {
       const providerInstance = this.providerService.findByService(provider);
 
       if (!providerInstance) {
-         throw new NotFoundException(
+         return new NotFoundException(
             `Провайдер '${provider}' не найден! Проверьте правильность введенных данных.`,
          );
       }

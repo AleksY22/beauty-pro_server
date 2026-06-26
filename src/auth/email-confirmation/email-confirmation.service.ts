@@ -34,13 +34,13 @@ export class EmailConfirmationService {
       });
 
       if (!existingToken) {
-         throw new NotFoundException('Токен подтверждения не найден!');
+         return new NotFoundException('Токен подтверждения не найден!');
       }
 
       const hasExpired = new Date(existingToken.expiresIn) < new Date();
 
       if (hasExpired) {
-         throw new BadRequestException(
+         return new BadRequestException(
             'Токен подтверждения истек! Запросите новый токен для подтверждения.',
          );
       }
@@ -50,7 +50,7 @@ export class EmailConfirmationService {
       );
 
       if (!existingUser) {
-         throw new NotFoundException(
+         return new NotFoundException(
             'Пользователь не найден! Проверьте введенный email.',
          );
       }

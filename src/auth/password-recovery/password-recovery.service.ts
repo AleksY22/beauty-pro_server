@@ -25,7 +25,7 @@ export class PasswordRecoveryService {
       const existingUser = await this.userService.getByEmail(dto.email);
 
       if (!existingUser) {
-         throw new NotFoundException(
+         return new NotFoundException(
             'Пользователь не найден! Проверьте введенный email.',
          );
       }
@@ -54,7 +54,7 @@ export class PasswordRecoveryService {
       });
 
       if (!existingToken) {
-         throw new NotFoundException(
+         return new NotFoundException(
             'Токен не найден! Проверьте введенные данные или запросите новый токен.',
          );
       }
@@ -62,7 +62,7 @@ export class PasswordRecoveryService {
       const hasExpired = new Date(existingToken.expiresIn) < new Date();
 
       if (hasExpired) {
-         throw new BadRequestException(
+         return new BadRequestException(
             'Токен сброса пароля истек! Запросите новый токен для подтверждения сброса пароля.',
          );
       }
@@ -72,7 +72,7 @@ export class PasswordRecoveryService {
       );
 
       if (!existingUser) {
-         throw new NotFoundException(
+         return new NotFoundException(
             'Пользователь не найден! Проверьте введенный email.',
          );
       }

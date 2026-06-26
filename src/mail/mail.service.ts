@@ -4,8 +4,39 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { render } from '@react-email/components';
 import { ConfirmationTemplate } from './templates/confirmation.template';
+import { OrderCancelledTemplate } from './templates/order-cancelled.template';
+import { OrderConfirmationTemplate } from './templates/order-confirmation.template';
 import { ResetPasswordTemplate } from './templates/reset-password.template';
 import { TwoFactorAuthTemplate } from './templates/two-factor-auth.template';
+
+interface OrderItem {
+   id: string;
+   quantity: number;
+   priceAtPurchase: number;
+   variant?: {
+      product?: {
+         title: string;
+      };
+   };
+}
+interface IDelivery {
+   name: string;
+}
+
+interface IPayment {
+   name: string;
+}
+
+export interface Order {
+   id: string;
+   firstName: string;
+   total: number;
+   items: OrderItem[];
+   address: string | null;
+   phone: string;
+   deliveryMethod: IDelivery;
+   paymentMethod: IPayment;
+}
 
 @Injectable()
 export class MailService {
@@ -35,6 +66,28 @@ export class MailService {
       const html = await render(TwoFactorAuthTemplate({ token }));
 
       return this.sendMail(email, 'Двухфакторная аутентификация', html);
+   }
+
+   //Подтверждение заказа
+   public async sendOrderConfirmation(email: string, order: Order) {
+      const html = await render(OrderConfirmationTemplate(order));
+
+      return this.sendMail(
+         email,
+         `BeautyPro | Заказ №${order.id.slice(-6).toUpperCase()} принят!`,
+         html,
+      );
+   }
+
+   //Отмена заказа
+   public async sendOrderCancellation(email: string, order: Order) {
+      const html = await render(OrderCancelledTemplate(order));
+
+      return this.sendMail(
+         email,
+         `BeautyPro | Заказ №${order.id.slice(-6).toUpperCase()} отменен!`,
+         html,
+      );
    }
 
    //=========================================================================

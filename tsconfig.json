@@ -20,6 +20,7 @@
       "noImplicitAny": false,
       "strictBindCallApply": false,
       "noFallthroughCasesInSwitch": false,
-      "jsx": "react"
+      "jsx": "react",
+      "types": ["node", "express", "multer"]
    }
 }

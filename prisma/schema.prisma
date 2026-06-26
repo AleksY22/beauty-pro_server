@@ -18,9 +18,9 @@ model User {
    id                   String      @id @default(cuid())
 
    email                String      @unique
-   password             String
+   password             String?
 
-   displayName          String      @default("Не указано")
+   displayName          String      @default("Не указано")  @map("display_name")
    picture              String      @default("https://llbx8df7abbnujxh.public.blob.vercel-storage.com/icons/no-user-image.png")
 
    role                 UserRole    @default(REGULAR)
@@ -31,9 +31,11 @@ model User {
 
    accounts             Account[]
 
+   cartItems            CartItem[]
+
    orders               Order[]
 
-   favorites            Product[]
+   favorites            Product[]   @relation("UserFavorites")
 
    reviews              Review[]
 
@@ -51,7 +53,7 @@ model Account {
 
    refreshToken         String?     @map("refresh_token")
    accessToken          String?     @map("access_token")
-   expiresAt            Int         @map("expires_at")
+   expiresAt            Int?        @map("expires_at")
 
    createdAt            DateTime    @default(now())   @map("created_at")
    updatedAt            DateTime    @updatedAt        @map("updated_at")
@@ -75,90 +77,240 @@ model Token {
    @@map("token")
 }
 
-model Order {
-   id                   String      @id            @default(cuid())
-   createdAt            DateTime                   @default(now())                           @map("created_at")
-   updatedAt            DateTime                   @updatedAt                                @map("updated_at")
+model CartItem {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
 
-   status               OrderStatus                @default(PENDING)
+   quantity             Int               @default(1)
+
+   userId               String            @map("user_id")
+   user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   variantId            String            @map("variant_id")
+   variant              ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+   // Защита от дублей: у одного юзера один вариант может быть в корзине только один раз
+   @@unique([userId, variantId])
+   @@map("cart_item")
+}
+
+model Order {
+   id                   String   @id   @default(cuid())
+   createdAt            DateTime       @default(now())   @map("created_at")
+   updatedAt            DateTime       @updatedAt        @map("updated_at")
+
+   status               OrderStatus    @default(PENDING)
 
    items                OrderItem[]
-   total                Int
+   total                Decimal        @db.Decimal(10,2)
 
-   user                 User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-   userId               String?                                                              @map("user_id")
+   firstName            String         @map("first_name")
+   lastName             String?        @map("last_name")
+   phone                String
+   email                String
+   address              String?
+   comment              String?
+
+   paymentMethodId      String         @map("payment_method_id")
+   paymentMethod        PaymentMethod  @relation(fields: [paymentMethodId], references: [id])
+
+   deliveryMethodId     String         @map("delivery_method_id")
+   deliveryMethod       DeliveryMethod @relation(fields: [deliveryMethodId], references: [id])
+
+
+   userId               String?        @map("user_id")
+   user                 User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
 
    @@map("order")
 }
 
 model OrderItem {
-   id                   String      @id            @default(cuid())
-   createdAt            DateTime                   @default(now())                           @map("created_at")
-   updatedAt            DateTime                   @updatedAt                                @map("updated_at")
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
 
    quantity             Int
-   price                Int
+   priceAtPurchase      Decimal     @db.Decimal(10,2)       @map("price_at_purchase")
 
    order                Order?      @relation(fields: [orderId], references: [id])
-   orderId              String?                                                              @map("order_id")
+   orderId              String?                             @map("order_id")
 
-   product              Product?    @relation(fields: [productId], references: [id])
-   productId            String?                                                              @map("product_id")
+   variantId            String                              @map("variant_id")
+   variant              ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
    @@map("order_item")
 }
 
 model Product {
-   id                   String      @id            @default(cuid())
-   createdAt            DateTime                   @default(now())                           @map("created_at")
-   updatedAt            DateTime                   @updatedAt                                @map("updated_at")
-
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
    title                String
    description          String
-   price                Int
    images               String[]
 
    reviews              Review[]
 
-   orderItems           OrderItem[]
+   category             Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+   categoryId           String?     @map("category_id")
 
-   category             Category?   @relation(fields: [categoryId], references: [id])
-   categoryId           String?                                                              @map("category_id")
+   variants             ProductVariant[]
 
-   user                 User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-   userId               String?                                                              @map("user_id")
+   favoritedBy          User[]      @relation("UserFavorites")
 
    @@map("product")
 }
 
+model ProductVariant {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime    @default(now())   @map("created_at")
+   updatedAt            DateTime    @updatedAt        @map("updated_at")
+   price                Decimal     @db.Decimal(10,2)
+   sku                  String      @unique
+   stock                Int         @default(0)
+   discount             Int         @default(0)
+   
+   productId            String      @map("product_id")
+   product              Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+   colorId              String?     @map("color_id")
+   color                Color?      @relation(fields: [colorId], references: [id], onDelete: SetNull)
+
+   properties           VariantProperty[]
+
+   orderItems           OrderItem[]
+
+   cartItems            CartItem[]
+
+   @@map("product_variant")
+}
+
 model Category {
-   id                   String      @id            @default(cuid())
-   createdAt            DateTime                   @default(now())                           @map("created_at")
-   updatedAt            DateTime                   @updatedAt                                @map("updated_at")
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
 
    title                String
    description          String
+   image                String
 
    products             Product[]
 
    @@map("category")
 }
 
+model Promotion {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+
+   title                String
+   date                 String
+   image                String
+
+   @@map("promotion")
+}
+
+model Advertisement {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+
+   title                String
+   image                String
+
+   @@map("advertisement")
+}
+
 model Review {
-   id                   String      @id            @default(cuid())
-   createdAt            DateTime                   @default(now())                           @map("created_at")
-   updatedAt            DateTime                   @updatedAt                                @map("updated_at")
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
 
    text                 String
    rating               Int
 
-   user                 User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-   userId               String?                                                              @map("user_id")
+   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+   userId               String    @map("user_id")
 
-   product              Product?    @relation(fields: [productId], references: [id])
-   productId            String?                                                              @map("product_id")
+   product              Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+   productId            String     @map("product_id")
 
    @@map("review")
+}
+
+model Color {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+
+   name                 String
+   value                String
+
+   productVariants      ProductVariant[]
+
+   @@map("color")
+}
+
+model Attribute {
+   id                   String      @id      @default(cuid())
+   createdAt            DateTime             @default(now())   @map("created_at")
+   updatedAt            DateTime             @updatedAt        @map("updated_at")
+   name                 String      @unique
+   variantProperties    VariantProperty[]
+
+   @@map("attribute")
+}
+
+model VariantProperty {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+   value                String
+
+   variantId            String            @map("variant_id")
+   variant              ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+   attributeId          String            @map("attribute_id")
+   attribute            Attribute   @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+
+   @@unique([variantId, attributeId])
+   @@map("variant_property")
+}
+
+model DeliveryMethod {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+
+   code                 String            @unique
+   name                 String
+   description          String
+   isEnabled            Boolean           @default(false)
+
+   instruction          String?     @db.Text
+
+   orders               Order[]
+
+   @@map("delivery_method")
+}
+
+model PaymentMethod {
+   id                   String      @id   @default(cuid())
+   createdAt            DateTime          @default(now())   @map("created_at")
+   updatedAt            DateTime          @updatedAt        @map("updated_at")
+   
+   code                 String            @unique
+   name                 String
+   description          String
+   isEnabled            Boolean           @default(false)
+
+   instruction          String?     @db.Text
+
+   orders               Order[]
+
+   @@map("payment_method")
 }
 
 enum UserRole {
@@ -180,6 +332,9 @@ enum TokenType {
 
 enum OrderStatus {
    PENDING
-   SUCCEEDING
+   PAID_AND_WAITING
+   PAID_AND_DELIVERING
+   DELIVERING
    CANCELLED
+   COMPLETED
 }
