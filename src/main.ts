@@ -2,6 +2,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 //connect-redis v.7.1.1
 import RedisStore from 'connect-redis';
 import cookieParser from 'cookie-parser';
@@ -12,9 +13,12 @@ import { ms, StringValue } from './libs/utils/ms.util';
 import { parseBoolean } from './libs/utils/parse-boolean.util';
 
 async function bootstrap() {
-   const app = await NestFactory.create(AppModule);
+   // const app = await NestFactory.create(AppModule);
+   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
    const config = app.get(ConfigService);
+
+   app.set('trust proxy', 1);
 
    const redis = new Redis(config.getOrThrow('REDIS_URL'));
 
@@ -57,7 +61,7 @@ async function bootstrap() {
    app.enableCors({
       origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
       credentials: true,
-      exposedHeaders: ['set-cookie'],
+      // exposedHeaders: ['set-cookie'],
    });
 
    await app.listen(config.getOrThrow<number>('APPLICATION_PORT'));
