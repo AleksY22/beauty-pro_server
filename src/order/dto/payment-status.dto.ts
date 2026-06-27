@@ -27,7 +27,7 @@ export class PaymentStatusDto {
    event!:
       | 'payment.succeeded'
       | 'payment.waiting_for_capture'
-      | 'payment.canceled'
+      | 'payment.cancelled'
       | 'refund.succeeded';
    type!: string;
    object!: ObjectPayment;

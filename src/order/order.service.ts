@@ -508,7 +508,7 @@ export class OrderService {
       }
 
       // 4. Платеж отменен пользователем или банком -> Возвращаем остатки на склад!
-      if (dto.event === 'payment.canceled') {
+      if (dto.event === 'payment.cancelled') {
          try {
             type CancelledOrderWithRelations = Prisma.OrderGetPayload<{
                include: {
