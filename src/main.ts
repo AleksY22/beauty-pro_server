@@ -18,6 +18,8 @@ async function bootstrap() {
 
    const redis = new Redis(config.getOrThrow('REDIS_URL'));
 
+   const isProduction = process.env.NODE_ENV === 'production';
+
    app.use(cookieParser(config.getOrThrow<string>('COOKIES_SECRET')));
 
    app.useGlobalPipes(
@@ -33,13 +35,15 @@ async function bootstrap() {
          resave: true,
          saveUninitialized: false,
          cookie: {
-            domain: config.getOrThrow<string>('SESSION_DOMAIN'),
+            domain: isProduction
+               ? undefined
+               : config.get<string>('SESSION_DOMAIN'),
             maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
             httpOnly: parseBoolean(
                config.getOrThrow<string>('SESSION_HTTP_ONLY'),
             ),
             secure: parseBoolean(config.getOrThrow<string>('SESSION_SECURE')),
-            sameSite: 'lax',
+            sameSite: isProduction ? 'none' : 'lax',
          },
          store: new RedisStore({
             client: redis,
