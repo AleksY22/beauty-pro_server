@@ -454,6 +454,10 @@ export class OrderService {
 
    //Обновление статуса заказа===========================
    async updateStatus(dto: PaymentStatusDto) {
+      console.log('--- ВЕБХУК ЮKASSA ---', {
+         event: dto?.event,
+         id: dto?.object?.id,
+      });
       // 1. Получаем ID заказа из описания платежа ЮKassa
       // const orderId = dto.object.description.split('#')[1];
       const orderId = dto.object?.metadata?.orderId;
@@ -520,51 +524,48 @@ export class OrderService {
                };
             }>;
 
-            let cancelledOrderForMail: CancelledOrderWithRelations | null =
-               null;
-
-            await this.prisma.$transaction(async (tx) => {
-               // 1. Блокируем строку заказа для чтения (FOR UPDATE) и проверяем статус
-               const order = await tx.order.findUnique({
-                  where: { id: orderId },
-                  include: {
-                     items: {
-                        include: {
-                           variant: {
-                              include: { product: true },
+            const cancelledOrderForMail = await this.prisma.$transaction(
+               async (tx) => {
+                  // 1. Блокируем строку заказа для чтения (FOR UPDATE) и проверяем статус
+                  const order = await tx.order.findUnique({
+                     where: { id: orderId },
+                     include: {
+                        items: {
+                           include: {
+                              variant: {
+                                 include: { product: true },
+                              },
                            },
                         },
+                        deliveryMethod: true,
+                        paymentMethod: true,
                      },
-                     deliveryMethod: true,
-                     paymentMethod: true,
-                  },
-               });
-
-               // Если заказ не найден или уже отменен — прерываем транзакцию
-               if (!order) {
-                  throw new NotFoundException(`Заказ ${orderId} не найден`);
-               }
-               if (order.status === OrderStatus.CANCELLED) {
-                  return;
-               }
-
-               // 2. Меняем статус заказа на Отменен
-               await tx.order.update({
-                  where: { id: orderId },
-                  data: { status: OrderStatus.CANCELLED },
-               });
-
-               // 3. Возвращаем товары на склад
-               for (const item of order.items) {
-                  await tx.productVariant.update({
-                     where: { id: item.variantId },
-                     data: { stock: { increment: item.quantity } },
                   });
-               }
-               // Сохраняем объект заказа для дальнейшей отправки почты вне транзакции
-               cancelledOrderForMail =
-                  order as any as CancelledOrderWithRelations;
-            });
+
+                  // Если заказ не найден или уже отменен — прерываем транзакцию
+                  if (!order) {
+                     throw new NotFoundException(`Заказ ${orderId} не найден`);
+                  }
+                  if (order.status === OrderStatus.CANCELLED) {
+                     return;
+                  }
+
+                  // 2. Меняем статус заказа на Отменен
+                  await tx.order.update({
+                     where: { id: orderId },
+                     data: { status: OrderStatus.CANCELLED },
+                  });
+
+                  // 3. Возвращаем товары на склад
+                  for (const item of order.items) {
+                     await tx.productVariant.update({
+                        where: { id: item.variantId },
+                        data: { stock: { increment: item.quantity } },
+                     });
+                  }
+                  return order;
+               },
+            );
 
             // Отправляем письмо покупателю об отмене (ВНЕ пула транзакции СУБД)
             if (cancelledOrderForMail) {
