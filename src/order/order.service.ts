@@ -411,7 +411,7 @@ export class OrderService {
             {
                amount: {
                   value: finalizedOrder.total.toFixed(2),
-                  currency: 'BYN',
+                  currency: 'RUB',
                },
                payment_method_data: { type: 'bank_card' },
                confirmation: {
