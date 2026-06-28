@@ -463,8 +463,8 @@ export class OrderService {
          dto?.object?.metadata?.orderId,
       );
       // 1. Получаем ID заказа из описания платежа ЮKassa
-      // const orderId = dto.object.description.split('#')[1];
-      const orderId = dto.object?.metadata?.orderId;
+      const orderId = dto.object.description.split('#')[1];
+      // const orderId = dto.object?.metadata?.orderId;
 
       // Если платеж не связан с нашей системой заказов, игнорируем его
       if (!orderId) {
