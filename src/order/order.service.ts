@@ -622,7 +622,7 @@ export class OrderService {
             },
          };
 
-         return checkout.capturePayment(dto.object.id, capturePayment);
+         return await checkout.capturePayment(dto.object.id, capturePayment);
       }
 
       if (dto.event === 'payment.succeeded') {
