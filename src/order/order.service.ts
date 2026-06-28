@@ -626,7 +626,7 @@ export class OrderService {
       }
 
       if (dto.event === 'payment.succeeded') {
-         const orderId = dto.object.description.split('#')[1];
+         const orderId = dto.object.description.split('№')[1]?.split(' ')[0];
 
          await this.prisma.order.update({
             where: {
