@@ -14,9 +14,7 @@ import { parseBoolean } from './libs/utils/parse-boolean.util';
 
 async function bootstrap() {
    // const app = await NestFactory.create(AppModule);
-   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-      rawBody: true,
-   });
+   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
    const config = app.get(ConfigService);
 
@@ -31,7 +29,6 @@ async function bootstrap() {
    app.useGlobalPipes(
       new ValidationPipe({
          transform: true,
-         whitelist: true,
       }),
    );
 
