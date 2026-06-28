@@ -614,6 +614,7 @@ export class OrderService {
    // }
 
    async updateStatus(dto: PaymentStatusDto) {
+      console.error(`[YooKassa] Получен хук. Событие: ${dto.event}`);
       if (dto.event === 'payment.waiting_for_capture') {
          const capturePayment: ICapturePayment = {
             amount: {
