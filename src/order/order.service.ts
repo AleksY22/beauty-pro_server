@@ -453,168 +453,25 @@ export class OrderService {
    }
 
    //Обновление статуса заказа===========================
-   // async updateStatus(dto: PaymentStatusDto) {
-   //    // 1. Получаем ID заказа из описания платежа ЮKassa
-   //    // const orderId = dto.object.description.split('#')[1];
-   //    let orderId = dto.object?.metadata?.orderId;
-
-   //    if (!orderId && dto.object?.description) {
-   //       const parts = dto.object.description.split('#');
-   //       if (parts.length > 1) {
-   //          orderId = parts[1].trim();
-   //       }
-   //    }
-
-   //    // Если платеж не связан с нашей системой заказов, игнорируем его
-   //    if (!orderId) {
-   //       console.log('❌ Отмена: orderId не найден в metadata запроса');
-   //       // return true;
-   //       throw new NotFoundException(`Заказ №${orderId} не найден`);
-   //    }
-
-   //    // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
-   //    if (dto.event === 'payment.waiting_for_capture') {
-   //       const capturePayment: ICapturePayment = {
-   //          amount: {
-   //             value: dto.object.amount.value,
-   //             currency: dto.object.amount.currency,
-   //          },
-   //       };
-   //       // Вызываем подтверждение в ЮKassa.
-   //       // Менять статус заказа здесь НЕ НУЖНО — ЮKassa через секунду пришлет новый вебхук "payment.succeeded"
-
-   //       try {
-   //          // Передаем уникальный ключ (например, на основе ID платежа), чтобы избежать ошибок при повторном вебхуке
-   //          const idempotenceKey = `capture-${dto.object.id}`;
-   //          await checkout.capturePayment(
-   //             dto.object.id,
-   //             capturePayment,
-   //             idempotenceKey,
-   //          );
-   //       } catch (captureError) {
-   //          // Если платеж уже захвачен или находится в обработке, ЮKassa может выкинуть ошибку.
-   //          // Логируем её, но возвращаем true, чтобы вебхук не слался повторно.
-   //          console.error(
-   //             `Ошибка подтверждения платежа ${dto.object.id}:`,
-   //             captureError,
-   //          );
-   //       }
-   //       return true;
-   //    }
-
-   //    // 3. Деньги успешно списаны -> Меняем статус заказа на оплаченный
-   //    if (dto.event === 'payment.succeeded') {
-   //       // Защита от повторных вебхуков: обновляем только если статус еще не изменен
-   //       await this.prisma.order.updateMany({
-   //          where: {
-   //             id: orderId,
-   //             status: { not: OrderStatus.PAID_AND_WAITING },
-   //          },
-   //          data: {
-   //             status: OrderStatus.PAID_AND_WAITING,
-   //          },
-   //       });
-
-   //       return true;
-   //    }
-
-   //    // 4. Платеж отменен пользователем или банком -> Возвращаем остатки на склад!
-   //    if (dto.event === 'payment.cancelled') {
-   //       try {
-   //          type CancelledOrderWithRelations = Prisma.OrderGetPayload<{
-   //             include: {
-   //                items: {
-   //                   include: { variant: { include: { product: true } } };
-   //                };
-   //                deliveryMethod: true;
-   //                paymentMethod: true;
-   //             };
-   //          }>;
-
-   //          const cancelledOrderForMail = await this.prisma.$transaction(
-   //             async (tx) => {
-   //                // 1. Блокируем строку заказа для чтения (FOR UPDATE) и проверяем статус
-   //                const order = await tx.order.findUnique({
-   //                   where: { id: orderId },
-   //                   include: {
-   //                      items: {
-   //                         include: {
-   //                            variant: {
-   //                               include: { product: true },
-   //                            },
-   //                         },
-   //                      },
-   //                      deliveryMethod: true,
-   //                      paymentMethod: true,
-   //                   },
-   //                });
-
-   //                // Если заказ не найден или уже отменен — прерываем транзакцию
-   //                if (!order) {
-   //                   throw new NotFoundException(`Заказ ${orderId} не найден`);
-   //                }
-   //                if (order.status === OrderStatus.CANCELLED) {
-   //                   return;
-   //                }
-
-   //                // 2. Меняем статус заказа на Отменен
-   //                await tx.order.update({
-   //                   where: { id: orderId },
-   //                   data: { status: OrderStatus.CANCELLED },
-   //                });
-
-   //                // 3. Возвращаем товары на склад
-   //                for (const item of order.items) {
-   //                   await tx.productVariant.update({
-   //                      where: { id: item.variantId },
-   //                      data: { stock: { increment: item.quantity } },
-   //                   });
-   //                }
-   //                return order;
-   //             },
-   //          );
-
-   //          // Отправляем письмо покупателю об отмене (ВНЕ пула транзакции СУБД)
-   //          if (cancelledOrderForMail) {
-   //             const safeOrder =
-   //                cancelledOrderForMail as CancelledOrderWithRelations;
-   //             const formattedCancelledOrder = {
-   //                ...safeOrder,
-   //                total: Number(safeOrder.total),
-   //                items: safeOrder.items.map((item) => ({
-   //                   ...item,
-   //                   priceAtPurchase: Number(item.priceAtPurchase),
-   //                   variant: {
-   //                      ...item.variant,
-   //                      price: Number(item.variant.price),
-   //                   },
-   //                })),
-   //             };
-
-   //             await this.mailService.sendOrderCancellation(
-   //                formattedCancelledOrder.email,
-   //                formattedCancelledOrder,
-   //             );
-
-   //             await this.telegramService.sendAdminCancellationNotification(
-   //                formattedCancelledOrder,
-   //             );
-   //          }
-   //       } catch (transactionError) {
-   //          console.error(
-   //             `Ошибка при отмене заказа ${orderId} через вебхук:`,
-   //             transactionError,
-   //          );
-   //          // Не выкидываем HTTP-ошибку наружу, чтобы ЮKassa не зацикливала запросы
-   //       }
-
-   //       return true;
-   //    }
-   //    return true;
-   // }
-
    async updateStatus(dto: PaymentStatusDto) {
-      console.error(`[YooKassa] Получен хук. Событие: ${dto.event}`);
+      // 1. Получаем ID заказа из описания платежа ЮKassa
+      // const orderId = dto.object.description.split('#')[1];
+      let orderId = dto.object?.metadata?.orderId;
+
+      if (!orderId && dto.object?.description) {
+         const parts = dto.object.description.split('#');
+         if (parts.length > 1) {
+            orderId = parts[1].trim();
+         }
+      }
+
+      // Если платеж не связан с нашей системой заказов, игнорируем его
+      if (!orderId) {
+         console.log('❌ Отмена: orderId не найден в metadata запроса');
+         return true;
+      }
+
+      // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
       if (dto.event === 'payment.waiting_for_capture') {
          const capturePayment: ICapturePayment = {
             amount: {
@@ -622,16 +479,35 @@ export class OrderService {
                currency: dto.object.amount.currency,
             },
          };
+         // Вызываем подтверждение в ЮKassa.
+         // Менять статус заказа здесь НЕ НУЖНО — ЮKassa через секунду пришлет новый вебхук "payment.succeeded"
 
-         return await checkout.capturePayment(dto.object.id, capturePayment);
+         try {
+            // Передаем уникальный ключ (например, на основе ID платежа), чтобы избежать ошибок при повторном вебхуке
+            const idempotenceKey = `capture-${dto.object.id}`;
+            await checkout.capturePayment(
+               dto.object.id,
+               capturePayment,
+               idempotenceKey,
+            );
+         } catch (captureError) {
+            // Если платеж уже захвачен или находится в обработке, ЮKassa может выкинуть ошибку.
+            // Логируем её, но возвращаем true, чтобы вебхук не слался повторно.
+            console.error(
+               `Ошибка подтверждения платежа ${dto.object.id}:`,
+               captureError,
+            );
+         }
+         return true;
       }
 
+      // 3. Деньги успешно списаны -> Меняем статус заказа на оплаченный
       if (dto.event === 'payment.succeeded') {
-         const orderId = dto.object.description.split('№')[1]?.split(' ')[0];
-
-         await this.prisma.order.update({
+         // Защита от повторных вебхуков: обновляем только если статус еще не изменен
+         await this.prisma.order.updateMany({
             where: {
                id: orderId,
+               status: { not: OrderStatus.PAID_AND_WAITING },
             },
             data: {
                status: OrderStatus.PAID_AND_WAITING,
@@ -641,6 +517,98 @@ export class OrderService {
          return true;
       }
 
+      // 4. Платеж отменен пользователем или банком -> Возвращаем остатки на склад!
+      if (dto.event === 'payment.cancelled') {
+         try {
+            type CancelledOrderWithRelations = Prisma.OrderGetPayload<{
+               include: {
+                  items: {
+                     include: { variant: { include: { product: true } } };
+                  };
+                  deliveryMethod: true;
+                  paymentMethod: true;
+               };
+            }>;
+
+            const cancelledOrderForMail = await this.prisma.$transaction(
+               async (tx) => {
+                  // 1. Блокируем строку заказа для чтения (FOR UPDATE) и проверяем статус
+                  const order = await tx.order.findUnique({
+                     where: { id: orderId },
+                     include: {
+                        items: {
+                           include: {
+                              variant: {
+                                 include: { product: true },
+                              },
+                           },
+                        },
+                        deliveryMethod: true,
+                        paymentMethod: true,
+                     },
+                  });
+
+                  // Если заказ не найден или уже отменен — прерываем транзакцию
+                  if (!order) {
+                     throw new NotFoundException(`Заказ ${orderId} не найден`);
+                  }
+                  if (order.status === OrderStatus.CANCELLED) {
+                     return;
+                  }
+
+                  // 2. Меняем статус заказа на Отменен
+                  await tx.order.update({
+                     where: { id: orderId },
+                     data: { status: OrderStatus.CANCELLED },
+                  });
+
+                  // 3. Возвращаем товары на склад
+                  for (const item of order.items) {
+                     await tx.productVariant.update({
+                        where: { id: item.variantId },
+                        data: { stock: { increment: item.quantity } },
+                     });
+                  }
+                  return order;
+               },
+            );
+
+            // Отправляем письмо покупателю об отмене (ВНЕ пула транзакции СУБД)
+            if (cancelledOrderForMail) {
+               const safeOrder =
+                  cancelledOrderForMail as CancelledOrderWithRelations;
+               const formattedCancelledOrder = {
+                  ...safeOrder,
+                  total: Number(safeOrder.total),
+                  items: safeOrder.items.map((item) => ({
+                     ...item,
+                     priceAtPurchase: Number(item.priceAtPurchase),
+                     variant: {
+                        ...item.variant,
+                        price: Number(item.variant.price),
+                     },
+                  })),
+               };
+
+               await this.mailService.sendOrderCancellation(
+                  formattedCancelledOrder.email,
+                  formattedCancelledOrder,
+               );
+
+               await this.telegramService.sendAdminCancellationNotification(
+                  formattedCancelledOrder,
+               );
+            }
+         } catch (transactionError) {
+            console.error(
+               `Ошибка при отмене заказа ${orderId} через вебхук:`,
+               transactionError,
+            );
+            // Не выкидываем HTTP-ошибку наружу, чтобы ЮKassa не зацикливала запросы
+         }
+
+         return true;
+      }
       return true;
    }
 }

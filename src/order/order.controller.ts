@@ -76,7 +76,6 @@ export class OrderController {
    // @UseGuards(YookassaIpGuard)
    @Post('status')
    async updateStatus(@Body() dto: PaymentStatusDto) {
-      await this.orderService.updateStatus(dto);
-      return { status: 'ok' };
+      return this.orderService.updateStatus(dto);
    }
 }
