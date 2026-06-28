@@ -454,16 +454,22 @@ export class OrderService {
 
    //Обновление статуса заказа===========================
    async updateStatus(dto: PaymentStatusDto) {
-      console.log('--- ВЕБХУК ЮKASSA ---', {
-         event: dto?.event,
-         id: dto?.object?.id,
-      });
+      console.log('=== [Yookassa Webhook Получен] ===');
+      console.log('Тип события:', dto?.event);
+      console.log('ID платежа в ЮKassa:', dto?.object?.id);
+      console.log(
+         'Метаданные заказа (orderId):',
+         dto?.object?.metadata?.orderId,
+      );
       // 1. Получаем ID заказа из описания платежа ЮKassa
       // const orderId = dto.object.description.split('#')[1];
       const orderId = dto.object?.metadata?.orderId;
 
       // Если платеж не связан с нашей системой заказов, игнорируем его
-      if (!orderId) return true;
+      if (!orderId) {
+         console.log('❌ Отмена: orderId не найден в metadata запроса');
+         return true;
+      }
 
       // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
       if (dto.event === 'payment.waiting_for_capture') {
