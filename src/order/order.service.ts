@@ -253,7 +253,6 @@ export class OrderService {
 
    //Создание заказа=============================
    async createPayment(dto: OrderDto, userId: string | null) {
-      console.error(1);
       const idempotenceKey = uuidv4();
       const finalizedOrder = await this.prisma.$transaction(async (tx) => {
          let total = 0;
@@ -469,7 +468,8 @@ export class OrderService {
       // Если платеж не связан с нашей системой заказов, игнорируем его
       if (!orderId) {
          console.log('❌ Отмена: orderId не найден в metadata запроса');
-         return true;
+         // return true;
+         throw new NotFoundException(`Заказ №${orderId} не найден`);
       }
 
       // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
