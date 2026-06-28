@@ -253,7 +253,7 @@ export class OrderService {
 
    //Создание заказа=============================
    async createPayment(dto: OrderDto, userId: string | null) {
-      console.log(1);
+      console.error(1);
       const idempotenceKey = uuidv4();
       const finalizedOrder = await this.prisma.$transaction(async (tx) => {
          let total = 0;
