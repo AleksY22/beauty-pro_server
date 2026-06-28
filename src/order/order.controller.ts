@@ -73,7 +73,7 @@ export class OrderController {
 
    //Обновление статуса заказа===========================
    @HttpCode(HttpStatus.OK)
-   // @UseGuards(YookassaIpGuard)
+   @UseGuards(YookassaIpGuard)
    @Post('status')
    async updateStatus(@Body() dto: PaymentStatusDto) {
       return this.orderService.updateStatus(dto);
