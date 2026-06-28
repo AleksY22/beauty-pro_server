@@ -18,8 +18,6 @@ async function bootstrap() {
 
    const config = app.get(ConfigService);
 
-   app.set('trust proxy', 1);
-
    const redis = new Redis(config.getOrThrow('REDIS_URL'));
 
    const isProduction = process.env.NODE_ENV === 'production';

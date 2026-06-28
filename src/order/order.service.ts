@@ -474,8 +474,6 @@ export class OrderService {
          return true;
       }
 
-      console.log(`[YooKassa] Итоговый orderId для Prisma: ${orderId}`);
-
       // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
       if (dto.event === 'payment.waiting_for_capture') {
          const capturePayment: ICapturePayment = {
