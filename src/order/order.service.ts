@@ -455,13 +455,16 @@ export class OrderService {
    //Обновление статуса заказа===========================
    async updateStatus(dto: PaymentStatusDto) {
       // 1. Получаем ID заказа из описания платежа ЮKassa
-      // const orderId = dto.object.description.split('#')[1];
+
       let orderId = dto.object?.metadata?.orderId;
 
-      if (!orderId && dto.object?.description) {
-         const parts = dto.object.description.split('#');
-         if (parts.length > 1) {
-            orderId = parts[1].trim();
+      if (!orderId && dto.object.description) {
+         console.log(
+            `[YooKassa] ID не найден в metadata. Извлекаем из описания...`,
+         );
+         const match = dto.object.description.match(/№([a-z0-9]+)/i);
+         if (match && match[1]) {
+            orderId = match[1]; // Берем чистый CUID без знака №
          }
       }
 
@@ -470,6 +473,8 @@ export class OrderService {
          console.log('❌ Отмена: orderId не найден в metadata запроса');
          return true;
       }
+
+      console.log(`[YooKassa] Итоговый orderId для Prisma: ${orderId}`);
 
       // 2. ЮKassa заморозила деньги (двухстадийный платеж) -> Списываем их окончательно
       if (dto.event === 'payment.waiting_for_capture') {
