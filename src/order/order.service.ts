@@ -415,7 +415,6 @@ export class OrderService {
                   currency: 'RUB',
                },
                payment_method_data: { type: 'bank_card' },
-               capture: true,
                confirmation: {
                   type: 'redirect',
                   return_url: `${process.env.CLIENT_URL}/thanks?orderId=${finalizedOrder.newOrder.id}`,
@@ -458,7 +457,14 @@ export class OrderService {
    async updateStatus(dto: PaymentStatusDto) {
       // 1. Получаем ID заказа из описания платежа ЮKassa
       // const orderId = dto.object.description.split('#')[1];
-      const orderId = dto.object?.metadata?.orderId;
+      let orderId = dto.object?.metadata?.orderId;
+
+      if (!orderId && dto.object?.description) {
+         const parts = dto.object.description.split('#');
+         if (parts.length > 1) {
+            orderId = parts[1].trim();
+         }
+      }
 
       // Если платеж не связан с нашей системой заказов, игнорируем его
       if (!orderId) {
