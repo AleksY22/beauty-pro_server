@@ -11,6 +11,7 @@ import {
    UseGuards,
 } from '@nestjs/common';
 import { Authorization } from '../auth/decorators/auth.decorator';
+import { User } from '../generated/prisma/client';
 import { UserRole } from '../generated/prisma/enums';
 import { CurrentUser } from '../user/decorators/user.decorator';
 import { OrderDto, PaginationDto, UpdateOrderStatusDto } from './dto/order.dto';
@@ -44,9 +45,11 @@ export class OrderController {
    @Get('by-id/:orderId')
    async getById(
       @Param('orderId') orderId: string,
-      @CurrentUser('id') userId: string | null,
+      @CurrentUser() user: User | null,
    ) {
-      return this.orderService.getById(orderId, userId);
+      const userId = user?.id || null;
+      const userRole = user?.role || null;
+      return this.orderService.getById(orderId, userId, userRole);
    }
 
    //Изменение статуса заказа вручную

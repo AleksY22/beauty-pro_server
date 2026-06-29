@@ -120,7 +120,11 @@ export class OrderService {
    }
 
    //Получение по id===============================
-   async getById(orderId: string, currentUserId: string | null) {
+   async getById(
+      orderId: string,
+      currentUserId: string | null,
+      currentUserRole: string | null,
+   ) {
       const order = await this.prisma.order.findUnique({
          where: {
             id: orderId,
@@ -138,6 +142,10 @@ export class OrderService {
       });
 
       if (!order) throw new NotFoundException('Заказ не найден!');
+
+      if (currentUserRole === 'ADMIN') {
+         return order;
+      }
 
       if (order.userId && order.userId !== currentUserId) {
          throw new ForbiddenException(
