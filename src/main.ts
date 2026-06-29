@@ -16,6 +16,10 @@ async function bootstrap() {
    // const app = await NestFactory.create(AppModule);
    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+   // ОБЯЗАТЕЛЬНО ДЛЯ VERCEL / PROXIES
+   // Без этого express-session не отправит куку, если secure: true
+   app.set('trust proxy', 1);
+
    const config = app.get(ConfigService);
 
    const redis = new Redis(config.getOrThrow('REDIS_URL'));
