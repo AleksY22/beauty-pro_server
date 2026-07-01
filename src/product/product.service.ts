@@ -16,36 +16,62 @@ export class ProductService {
    ) {}
 
    //Функция поиска=======================================
-   private async getSearchTermFilter(searchTerm: string) {
-      return await this.prisma.product.findMany({
-         where: {
-            OR: [
-               {
-                  title: {
-                     contains: searchTerm,
-                     //не зависит от регистра
-                     mode: 'insensitive',
-                  },
+   private async getSearchTermFilter(
+      searchTerm: string,
+      page: number = 1,
+      perPage: number = 10,
+   ) {
+      const skip = (page - 1) * perPage;
+      const take = perPage;
+
+      const whereCondition = {
+         OR: [
+            {
+               title: {
+                  contains: searchTerm,
+                  mode: 'insensitive' as const, // фиксируем тип для Prisma
                },
-               {
-                  description: {
-                     contains: searchTerm,
-                     //не зависит от регистра
-                     mode: 'insensitive',
-                  },
+            },
+            {
+               description: {
+                  contains: searchTerm,
+                  mode: 'insensitive' as const,
                },
-            ],
+            },
+         ],
+      };
+      const [products, totalCount] = await Promise.all([
+         this.prisma.product.findMany({
+            where: whereCondition,
+            skip,
+            take,
+            include: {
+               category: true,
+               variants: true,
+            },
+            orderBy: {
+               createdAt: 'desc',
+            },
+         }),
+         this.prisma.product.count({
+            where: whereCondition,
+         }),
+      ]);
+      return {
+         products,
+         meta: {
+            totalCount,
+            currentPage: page,
+            totalPages: Math.ceil(totalCount / perPage),
+            hasMore: page * perPage < totalCount,
          },
-         include: {
-            category: true,
-            variants: true,
-         },
-      });
+      };
    }
 
    //Получение всех товаров================================
    async getAll(searchTerm?: string, page: number = 1, perPage: number = 10) {
-      if (searchTerm) return this.getSearchTermFilter(searchTerm);
+      if (searchTerm)
+         return this.getSearchTermFilter(searchTerm, page, perPage);
 
       const skip = (page - 1) * perPage;
       const take = perPage;

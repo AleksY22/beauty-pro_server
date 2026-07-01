@@ -136,25 +136,6 @@ export class ProductVariantService {
          this.prisma.productVariant.count({
             where: whereCondition, // Подсчет только отфильтрованных строк
          }),
-
-         // this.prisma.productVariant.findMany({
-         //    where: {
-         //       product: {
-         //          categoryId,
-         //       },
-         //    },
-         //    include: {
-         //       product: {
-         //          include: {
-         //             category: true, // При необходимости подтягиваем данные о продукте и категории
-         //          },
-         //       },
-         //    },
-         //    skip,
-         //    take,
-         //    orderBy: { createdAt: 'desc' },
-         // }),
-         // this.prisma.productVariant.count({ where: whereCondition }),
       ]);
 
       // проверка на пустой массив
