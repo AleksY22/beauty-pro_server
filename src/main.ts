@@ -61,25 +61,10 @@ async function bootstrap() {
    );
 
    app.enableCors({
-      origin: (origin, callback) => {
-         const allowedOrigins = [
-            config.getOrThrow<string>('ALLOWED_ORIGIN'),
-            'https://www.info-media.by',
-            'https://info-media.by',
-         ];
-
-         // Если запрос без origin (например, Postman) или он есть в списке разрешенных
-         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-         } else {
-            callback(new Error('Not allowed by CORS'));
-         }
-      },
-      // origin: [
-      //    config.getOrThrow<string>('ALLOWED_ORIGIN'),
-      //    'https://www.info-media.by',
-      //    'https://info-media.by',
-      // ],
+      origin: [
+         config.getOrThrow<string>('ALLOWED_ORIGIN'),
+         'https://info-media.by',
+      ],
       credentials: true,
       // exposedHeaders: ['set-cookie'],
    });
