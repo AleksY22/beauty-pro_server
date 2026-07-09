@@ -20,6 +20,9 @@ async function bootstrap() {
    // Без этого express-session не отправит куку, если secure: true
    app.set('trust proxy', 1);
 
+   // УСТАНАВЛИВАЕМ ГЛОБАЛЬНЫЙ ПРЕФИКС ДЛЯ ВСЕХ КОНТРОЛЛЕРОВ БЭКЕНДА
+   app.setGlobalPrefix('api');
+
    const config = app.get(ConfigService);
 
    const redis = new Redis(config.getOrThrow('REDIS_URL'));
