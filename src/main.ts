@@ -46,14 +46,14 @@ async function bootstrap() {
          proxy: true,
          cookie: {
             domain: isProduction
-               ? 'info-media.by'
+               ? '.info-media.by'
                : config.get<string>('SESSION_DOMAIN'),
             maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
             httpOnly: parseBoolean(
                config.getOrThrow<string>('SESSION_HTTP_ONLY'),
             ),
             secure: parseBoolean(config.getOrThrow<string>('SESSION_SECURE')),
-            sameSite: 'none',
+            sameSite: 'lax',
          },
          store: new RedisStore({
             client: redis,
