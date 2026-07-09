@@ -43,9 +43,10 @@ async function bootstrap() {
          name: config.getOrThrow<string>('SESSION_NAME'),
          resave: true,
          saveUninitialized: false,
+         proxy: true,
          cookie: {
             domain: isProduction
-               ? undefined
+               ? 'info-media.by'
                : config.get<string>('SESSION_DOMAIN'),
             maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
             httpOnly: parseBoolean(
