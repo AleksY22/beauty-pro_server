@@ -62,20 +62,22 @@ export class AuthService {
       const user = await this.userService.getByEmail(dto.email);
 
       if (!user || !user.password) {
-         return new NotFoundException('Пользователь не найден!');
+         // Заменяем return на throw, чтобы NestJS правильно отдал 404 статус
+         throw new NotFoundException('Пользователь не найден!');
       }
 
       const isValidPassword = await verify(user.password, dto.password);
 
       if (!isValidPassword) {
-         return new UnauthorizedException(
+         // Заменяем return на throw, чтобы убрать ошибку 500 циклических ссылок
+         throw new UnauthorizedException(
             'Неверный пароль! Попробуйте еще или восстановите пароль!',
          );
       }
 
       if (!user.isVerified) {
          await this.emailConfirmationService.sendVerificationToken(user.email);
-         return new UnauthorizedException(
+         throw new UnauthorizedException(
             'Ваш email не подтвержден! Пожалуйста, проверьте вашу почту и подтвердите email',
          );
       }
@@ -83,6 +85,7 @@ export class AuthService {
       if (user.isTwoFactorEnabled) {
          if (!dto.code) {
             await this.twoFactorAuthService.sendTwoFactorToken(user.email);
+            // Тут оставляем return, так как это обычный валидный объект, а не класс ошибки
             return {
                message:
                   'Проверьте вашу почту. Требуется код двухфакторной аутентификации.',
