@@ -153,6 +153,9 @@ export class AuthService {
 
    //Выход=============================================================
    public async logout(req: Request, res: Response): Promise<void> {
+      const sessionName = this.configService.getOrThrow<string>('SESSION_NAME');
+      const isProduction = process.env.NODE_ENV === 'production';
+
       return new Promise((resolve, reject) => {
          req.session.destroy((error) => {
             if (error) {
@@ -162,9 +165,15 @@ export class AuthService {
                   ),
                );
             }
-            res.clearCookie(
-               this.configService.getOrThrow<string>('SESSION_NAME'),
-            );
+            res.clearCookie(sessionName, {
+               // Точка перед доменом критически важна, чтобы прокси на Vercel стер куку!
+               domain: isProduction ? '.info-media.by' : undefined,
+               path: '/',
+               httpOnly: true,
+               secure: isProduction,
+               sameSite: 'lax',
+            });
+            res.json(true);
             resolve();
          });
       });
