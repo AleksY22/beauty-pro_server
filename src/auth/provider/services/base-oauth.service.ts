@@ -99,6 +99,7 @@ export class BaseOAuthService {
 
    //===========метод получения url перенаправления====================
    public getRedirectUrl() {
+      //!!!!для работы с next proxy редирект на клиент
       return `https://info-media.by/api/auth/oauth/callback/${this.options.name}`;
       // return `${this.BASE_URL}/api/auth/oauth/callback/${this.options.name}`;
       // return 'http://localhost:4000/api/auth/oauth/callback/google';

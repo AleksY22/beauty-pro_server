@@ -62,7 +62,6 @@ export class AuthService {
       const user = await this.userService.getByEmail(dto.email);
 
       if (!user || !user.password) {
-         // Заменяем return на throw, чтобы NestJS правильно отдал 404 статус
          throw new NotFoundException('Пользователь не найден!');
       }
 
