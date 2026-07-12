@@ -27,7 +27,7 @@ export const getMailerConfig = async (
    defaults: {
       // Пока вы не подтвердили свой домен в Resend, отправлять можно
       // СТРОГО с системного адреса: onboard@resend.dev
-      from: 'Beauty Pro <onboard@resend.dev>',
+      from: 'beauty-pro.email@info-media.by',
       // from: `${configService.getOrThrow<string>('MAIL_LOGIN')}`,
    },
 });
