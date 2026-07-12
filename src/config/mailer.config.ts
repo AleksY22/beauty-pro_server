@@ -18,13 +18,16 @@ export const getMailerConfig = async (
          pass: configService.getOrThrow<string>('MAIL_PASSWORD'),
       },
       // КРИТИЧЕСКИ ВАЖНЫЙ БЛОК ДЛЯ СВЯЗКИ VERCEL + CPANEL
-      tls: {
-         servername: 'mail.info-media.by',
-         // Игнорируем ошибки проверки, если SSL-сертификат привязан к общему серверу cPanel
-         rejectUnauthorized: false,
-      },
+      // tls: {
+      //    servername: 'mail.info-media.by',
+      //    // Игнорируем ошибки проверки, если SSL-сертификат привязан к общему серверу cPanel
+      //    rejectUnauthorized: false,
+      // },
    },
    defaults: {
-      from: `${configService.getOrThrow<string>('MAIL_LOGIN')}`,
+      // Пока вы не подтвердили свой домен в Resend, отправлять можно
+      // СТРОГО с системного адреса: onboard@resend.dev
+      from: 'Beauty Pro <onboard@resend.dev>',
+      // from: `${configService.getOrThrow<string>('MAIL_LOGIN')}`,
    },
 });
