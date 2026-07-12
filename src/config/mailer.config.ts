@@ -9,7 +9,7 @@ export const getMailerConfig = async (
 ): Promise<MailerOptions> => ({
    transport: {
       host: configService.getOrThrow<string>('MAIL_HOST'),
-      port: configService.getOrThrow<number>('MAIL_PORT'),
+      port: Number(configService.getOrThrow<string>('MAIL_PORT')),
       // secure: !isDev(configService),
       //т.к. порт 465 закрыт на vercel будем работать на 587 для него secure: false
       secure: false,
