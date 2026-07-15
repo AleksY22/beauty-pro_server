@@ -105,7 +105,7 @@ export class CartService {
          });
       }
 
-      // 2. Только после проверки ВСЕХ товаров смотрим, были ли ошибки
+      // Только после проверки ВСЕХ товаров смотрим, были ли ошибки
       if (errors.length > 0) {
          throw new BadRequestException({
             message:
@@ -115,7 +115,7 @@ export class CartService {
          });
       }
 
-      // 3. Если всё отлично, возвращаем успешный статус для всей корзины
+      // Если всё отлично, возвращаем успешный статус для всей корзины
       return { isValid: true, items: validatedItems };
    }
 

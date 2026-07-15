@@ -68,7 +68,6 @@ export class AuthService {
       const isValidPassword = await verify(user.password, dto.password);
 
       if (!isValidPassword) {
-         // Заменяем return на throw, чтобы убрать ошибку 500 циклических ссылок
          throw new UnauthorizedException(
             'Неверный пароль! Попробуйте еще или восстановите пароль!',
          );
@@ -84,7 +83,6 @@ export class AuthService {
       if (user.isTwoFactorEnabled) {
          if (!dto.code) {
             await this.twoFactorAuthService.sendTwoFactorToken(user.email);
-            // Тут оставляем return, так как это обычный валидный объект, а не класс ошибки
             return {
                message:
                   'Проверьте вашу почту. Требуется код двухфакторной аутентификации.',

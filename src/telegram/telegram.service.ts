@@ -109,9 +109,6 @@ ${itemsText}
          await this.bot.telegram.sendMessage(this.adminChatId, message, {
             parse_mode: 'Markdown',
          });
-         // this.logger.log(
-         //    `Уведомление о заказе ${order.id} успешно отправлено в Telegram.`,
-         // );
       } catch (error: any) {
          this.logger.error(
             `Ошибка отправки сообщения в Telegram: ${error.message}`,
@@ -154,10 +151,6 @@ ${itemsText}
          await this.bot.telegram.sendMessage(this.adminChatId, message, {
             parse_mode: 'Markdown',
          });
-
-         // this.logger.log(
-         //    `В Telegram отправлено уведомление об отмене заказа ${order.id}.`,
-         // );
       } catch (error: any) {
          this.logger.error(
             `Ошибка отправки сообщения об отмене в Telegram: ${error.message}`,

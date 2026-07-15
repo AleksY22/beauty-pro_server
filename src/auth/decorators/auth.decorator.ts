@@ -20,7 +20,7 @@ export function Authorization(
       ? (roles.slice(0, -1) as UserRole[])
       : (roles as UserRole[]);
 
-   // Если переданы роли (например, ADMIN) — строго требуем авторизацию и роль
+   // Если переданы роли (ADMIN) — строго требуем авторизацию и роль
    if (cleanRoles.length > 0) {
       return applyDecorators(
          Roles(...cleanRoles),
@@ -32,10 +32,6 @@ export function Authorization(
    if (isOptional) {
       return applyDecorators(UseGuards(OptionalAuthGuard));
    }
-
-   // if (roles.length > 0) {
-   //    return applyDecorators(Roles(...roles), UseGuards(AuthGuard, RolesGuard));
-   // }
 
    return applyDecorators(UseGuards(AuthGuard));
 }
